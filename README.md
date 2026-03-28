@@ -28,7 +28,7 @@ npx skills add ibaou-dev/skills --skill git-conventional-commits
 
 | Skill | Version | Assertions | With Skill | Without Skill | Delta | Uplift |
 | --- | --- | --- | --- | --- | --- | --- |
-| `git-conventional-commits` | v1.0.0 | 50 | 96% | 80% | +16pp | 1.20× |
+| [`git-conventional-commits`](skills/git-conventional-commits/EVALUATIONS.md) | v1.0.0 | 50 | 98% | 68% | +30pp | 1.44× |
 
 ## Development
 

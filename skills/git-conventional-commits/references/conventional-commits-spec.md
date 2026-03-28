@@ -14,7 +14,8 @@ Full reference: https://conventionalcommits.org/en/v1.0.0
 
 ## Rules
 
-1. Commits MUST be prefixed with a type (noun) followed by optional scope, optional `!`, then `: ` (colon + space).
+1. Commits MUST be prefixed with a type (noun) followed by optional scope,
+   optional `!`, then `: ` (colon + space).
 2. `feat` MUST be used for new features. Correlates with MINOR in SemVer.
 3. `fix` MUST be used for bug fixes. Correlates with PATCH in SemVer.
 4. A scope MAY be provided in parentheses after the type: `fix(parser):`.
@@ -22,8 +23,10 @@ Full reference: https://conventionalcommits.org/en/v1.0.0
 6. A body MAY be included after the description, separated by one blank line.
 7. One or more footers MAY be provided, each on its own line after the body.
 8. Footer tokens MUST use `-` in place of whitespace, except `BREAKING CHANGE`.
-9. A breaking change MUST be indicated in the footer as `BREAKING CHANGE: <description>`, OR by appending `!` after the type/scope.
-10. Types other than `feat` and `fix` are permitted (e.g. `docs:`, `style:`, `refactor:`, `perf:`, `test:`, `build:`, `ci:`, `chore:`, `revert:`).
+9. A breaking change MUST be indicated in the footer as
+   `BREAKING CHANGE: <description>`, OR by appending `!` after the type/scope.
+10. Types other than `feat` and `fix` are permitted (e.g. `docs:`, `style:`,
+    `refactor:`, `perf:`, `test:`, `build:`, `ci:`, `chore:`, `revert:`).
 11. `BREAKING CHANGE` in a footer correlates with MAJOR in SemVer.
 
 ## Examples
@@ -85,24 +88,26 @@ Fixes #892
 
 ## Type Reference
 
-| Type | SemVer | Description |
-| --- | --- | --- |
-| `feat` | MINOR | New feature visible to end users |
-| `fix` | PATCH | Bug fix |
-| `docs` | — | Documentation only |
-| `style` | — | Formatting, whitespace — no behavior change |
-| `refactor` | — | Code restructure without behavior change |
-| `perf` | PATCH | Performance improvement |
-| `test` | — | Adding or correcting tests |
-| `build` | — | Build system, package manager |
-| `ci` | — | CI/CD configuration |
-| `chore` | — | Maintenance (not `fix`, not `feat`) |
-| `revert` | — | Reverts a previous commit |
+| Type       | SemVer | Description                                 |
+| ---------- | ------ | ------------------------------------------- |
+| `feat`     | MINOR  | New feature visible to end users            |
+| `fix`      | PATCH  | Bug fix                                     |
+| `docs`     | —      | Documentation only                          |
+| `style`    | —      | Formatting, whitespace — no behavior change |
+| `refactor` | —      | Code restructure without behavior change    |
+| `perf`     | PATCH  | Performance improvement                     |
+| `test`     | —      | Adding or correcting tests                  |
+| `build`    | —      | Build system, package manager               |
+| `ci`       | —      | CI/CD configuration                         |
+| `chore`    | —      | Maintenance (not `fix`, not `feat`)         |
+| `revert`   | —      | Reverts a previous commit                   |
 
 ## Line Length
 
-- **First line (subject):** maximum 72 characters (type + scope + `: ` + description)
-- **Body and footer lines:** 72 characters is a soft guide; prefer wrapping at sentence boundaries
+- **First line (subject):** maximum 72 characters (type + scope + `: ` +
+  description)
+- **Body and footer lines:** 72 characters is a soft guide; prefer wrapping at
+  sentence boundaries
 
 ## Breaking Change Patterns
 
@@ -120,7 +125,8 @@ fix!: remove deprecated --format flag
 BREAKING CHANGE: The --format flag is removed. Use --output instead.
 ```
 
-Never document a breaking change silently with `chore:`. Always use `BREAKING CHANGE:` footer.
+Never document a breaking change silently with `chore:`. Always use
+`BREAKING CHANGE:` footer.
 
 ## Footer Format
 
@@ -130,6 +136,7 @@ Token #value
 ```
 
 Standard tokens:
+
 - `BREAKING CHANGE` — breaking API change (space allowed; required by spec)
 - `Fixes` / `Closes` / `Resolves` — GitHub issue closing keywords
 - `Reviewed-by` — reviewer attribution

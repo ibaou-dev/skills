@@ -71,7 +71,8 @@ done
 
 ## Parallel eval pattern (via skill-creator subagents)
 
-When running in Claude Code with the skill-creator, spawn parallel subagents — all with_skill and without_skill runs in the same turn:
+When running in Claude Code with the skill-creator, spawn parallel subagents —
+all with_skill and without_skill runs in the same turn:
 
 ```
 # In skill-creator context, the Agent tool is used to spawn:
@@ -81,11 +82,12 @@ When running in Claude Code with the skill-creator, spawn parallel subagents —
 # ...all in parallel
 ```
 
-This reduces total wall-clock time from O(N*2) to O(max_parallelism).
+This reduces total wall-clock time from O(N\*2) to O(max_parallelism).
 
 ## Output format
 
 `claude -p` outputs the model's response to stdout. In benchmark context:
+
 - Save raw response to `eval-<id>-output.txt`
 - Grade against assertions post-hoc
 - LLM-judge assertions require a second `claude -p` call with the grader prompt
@@ -94,5 +96,7 @@ This reduces total wall-clock time from O(N*2) to O(max_parallelism).
 
 - `claude -p` is non-interactive — safe for scripting
 - Skills are loaded from the directory containing `SKILL.md`
-- The skill's `allowed-tools` frontmatter gates which tools are available during the run
-- Use the same model version for with/without comparisons to isolate skill effect
+- The skill's `allowed-tools` frontmatter gates which tools are available during
+  the run
+- Use the same model version for with/without comparisons to isolate skill
+  effect

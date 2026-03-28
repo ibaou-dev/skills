@@ -2,7 +2,8 @@
 
 ## benchmark.json schema
 
-Written per-skill after a full benchmark run. Lives at `<workspace>/benchmark.json`.
+Written per-skill after a full benchmark run. Lives at
+`<workspace>/benchmark.json`.
 
 ```json
 {
@@ -121,12 +122,13 @@ Each model run appends a row to the skill's section in EVALUATIONS.md:
 <details>
 <summary>Full breakdown (50 assertions)</summary>
 
-_Model: claude-sonnet-4-6 · 1 run · 2026-03-29 · grading: regex + LLM-as-judge (assertions 9.1, 9.2, 10.1, 10.2)_
+_Model: claude-sonnet-4-6 · 1 run · 2026-03-29 · grading: regex + LLM-as-judge
+(assertions 9.1, 9.2, 10.1, 10.2)_
 
-| # | Assertion | With | Without |
-| --- | --- | --- | --- |
-| | **type-discrimination-refactor-vs-feat** — rename+extract is refactor not feat | **<span class="g">5/5</span>** | **<span class="r">2/5</span>** |
-| 1.1 | type is refactor | <span class="g">✓</span> | <span class="r">✗</span> |
+| #   | Assertion                                                                      | With                           | Without                        |
+| --- | ------------------------------------------------------------------------------ | ------------------------------ | ------------------------------ |
+|     | **type-discrimination-refactor-vs-feat** — rename+extract is refactor not feat | **<span class="g">5/5</span>** | **<span class="r">2/5</span>** |
+| 1.1 | type is refactor                                                               | <span class="g">✓</span>       | <span class="r">✗</span>       |
 ```
 
 ## Summary table update rules

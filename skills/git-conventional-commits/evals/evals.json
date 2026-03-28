@@ -4,7 +4,7 @@
     "name": "type-discrimination-refactor-vs-feat",
     "description": "Renaming + extracting a function is refactor, not feat — model defaults to feat",
     "prompt": "I staged changes in my git repo. Here's what happened: I renamed the function `authenticateUser` to `verifyCredentials` in auth/handler.go, extracted its token-validation logic into a new private function `validateToken`, and updated all call sites in three other files. No new capability was added — it's the same behavior, just restructured. Write a conventional commit message for these staged changes. The scope should be 'auth'.",
-    "trap": "Model sees a new function name and new private function, defaults to feat(auth) or feat: because it sees 'new' functionality, missing that no user-facing capability was added",
+    "trap": "Model sees a new function name and new private function, defaults to feat(auth) because it sees 'new' functionality, missing that no user-facing capability was added",
     "assertions": [
       {
         "id": "1.1",
@@ -31,9 +31,9 @@
   {
     "id": 2,
     "name": "breaking-change-footer-required",
-    "description": "Removing a deprecated API endpoint is a breaking change — model silently uses chore or fix",
+    "description": "Removing a deprecated API endpoint is a breaking change — model silently uses chore",
     "prompt": "I removed the deprecated `/api/v1/auth` endpoint from our Express server. This endpoint was marked deprecated 6 months ago and the replacement `/api/v2/auth` has been available since then. I staged the deletion of the v1 route handler and its tests. Write a conventional commit message for this change.",
-    "trap": "Model writes chore(deps) or fix: silently, without BREAKING CHANGE footer — because it's a 'cleanup' of deprecated code",
+    "trap": "Model writes chore: silently without BREAKING CHANGE footer — because it's a 'cleanup' of deprecated code",
     "assertions": [
       {
         "id": "2.1",
@@ -59,14 +59,15 @@
   },
   {
     "id": 3,
-    "name": "github-contributing-md-detection",
-    "description": "CONTRIBUTING.md says to use 'Fixes #N' for bugs — model omits footer or uses wrong keyword",
-    "prompt": "I fixed a database connection pool exhaustion bug. The fix limits the max connections and adds exponential backoff for retries. Here is our CONTRIBUTING.md:\n\n---\n# Contributing\n\nWe use GitHub for issue tracking. When your PR fixes a bug, include a footer:\n\n```\nFixes #<issue-number>\n```\n\nPlease use 'Fixes' (capital F) not 'Closes' for bug fixes.\n\nThe scope for database changes is 'db/pool'.\n---\n\nThe issue number is 847. Write the conventional commit message.",
-    "trap": "Model either omits the footer entirely, uses 'Closes #847' instead of 'Fixes #847', or puts the reference in the description instead of a footer",
+    "name": "contributing-md-non-standard-closing-keyword",
+    "description": "CONTRIBUTING.md specifies 'Addressed #N' (non-standard keyword) — model uses standard 'Fixes' or 'Closes' without reading the file",
+    "prompt": "I fixed a null pointer dereference in the payment processing module. The fix adds a guard clause before dereferencing the transaction object. The issue number is 512. Note: this project has a CONTRIBUTING.md in the repo root.",
+    "trap": "Without reading the project's CONTRIBUTING.md, the model defaults to standard keywords 'Fixes #512' or 'Closes #512'. The CONTRIBUTING.md requires the non-standard keyword 'Addressed #N', so the without-skill agent uses the wrong keyword while the with-skill agent reads the file and uses 'Addressed #512'.",
+    "skill_context": "# Contributing\n\nWe use GitHub for issue tracking. When your commit resolves an issue, include a footer using our project-specific keyword:\n\n```\nAddressed #<issue-number>\n```\n\nDo NOT use 'Fixes', 'Closes', or 'Resolves' — our issue bot only recognizes 'Addressed'.\n\nThe scope for payment processing changes is 'payments'.",
     "assertions": [
       {
         "id": "3.1",
-        "text": "The footer line is exactly 'Fixes #847' — the exact string 'Fixes #847' appears on its own line"
+        "text": "The footer line contains 'Addressed #512' — the exact string 'Addressed #512' appears on its own line"
       },
       {
         "id": "3.2",
@@ -74,28 +75,29 @@
       },
       {
         "id": "3.3",
-        "text": "The scope is 'db/pool' — the first line contains '(db/pool)'"
+        "text": "The scope is 'payments' — the first line contains '(payments)'"
       },
       {
         "id": "3.4",
-        "text": "The issue reference 'Fixes #847' appears in the footer section (after a blank line following the subject or body), NOT embedded in the description or body inline"
+        "text": "The footer does NOT use 'Fixes #512' or 'Closes #512' — only 'Addressed #512' is acceptable"
       },
       {
         "id": "3.5",
-        "text": "The description conveys what was fixed — mentions connection pool, connections, backoff, or retry"
+        "text": "The issue reference appears in the footer section (after a blank line), not embedded inline in the description"
       }
     ]
   },
   {
     "id": 4,
-    "name": "jira-tracker-key-extraction",
-    "description": "CONTRIBUTING.md specifies Jira PLAT-N format — model uses GitHub-style #N",
-    "prompt": "I implemented a new feature: a user dashboard showing recent activity. Here is our CONTRIBUTING.md:\n\n---\n# Contributing\n\nWe use Jira for issue tracking. Reference tickets using the format:\n\n  Closes PLAT-<number>\n\nExample: Closes PLAT-1234\n\nDo not use GitHub-style #N references.\n---\n\nThe Jira ticket is PLAT-2891. The feature is in the 'dashboard' module. Write the conventional commit message.",
-    "trap": "Model ignores the CONTRIBUTING.md Jira format and writes 'Closes #2891' using GitHub-style issue reference",
+    "name": "contributing-md-scope-override",
+    "description": "CONTRIBUTING.md mandates scope 'core' for UI/form changes — model uses natural 'user' or 'registration' scope instead",
+    "prompt": "I added client-side validation to the user registration form — email format check and password strength indicator. The changes are in the frontend form components. Note: this project has a CONTRIBUTING.md in the repo root.",
+    "trap": "Without reading the project's CONTRIBUTING.md, the model picks a natural scope like 'user', 'registration', 'ui', or 'forms'. The CONTRIBUTING.md overrides this with a mandatory 'core' scope for all UI/form changes. The without-skill agent uses a natural scope; the with-skill agent reads the file and uses 'core'.",
+    "skill_context": "# Contributing\n\n## Commit Scopes\n\nAll commits MUST use scopes from the following list. Do not invent new scopes.\n\n| Area | Mandatory scope |\n|------|-----------------|\n| UI components, forms, frontend | `core` |\n| API routes, controllers | `api` |\n| Database migrations, models | `db` |\n| Authentication, authorization | `auth` |\n| CI/CD, build scripts | `infra` |\n\nCommon mistake: developers often write `feat(ui):` or `feat(forms):` — these are INVALID. Frontend work always uses `core`.",
     "assertions": [
       {
         "id": "4.1",
-        "text": "The footer contains 'Closes PLAT-2891' — the exact string 'PLAT-2891' appears in a footer line"
+        "text": "The scope is 'core' — the first line contains '(core)'"
       },
       {
         "id": "4.2",
@@ -103,15 +105,15 @@
       },
       {
         "id": "4.3",
-        "text": "The Jira project key used is 'PLAT' — the reference contains 'PLAT-' not an invented prefix like 'DASH-' or 'USER-'"
+        "text": "The scope is NOT 'user', 'registration', 'ui', 'forms', or 'frontend' — none of these appear as the scope in parentheses on the first line"
       },
       {
         "id": "4.4",
-        "text": "The issue reference appears in the footer section (after a blank line), not inline in the description"
+        "text": "The description mentions validation, form, or registration — conveys what was actually changed"
       },
       {
         "id": "4.5",
-        "text": "The commit message does NOT contain '#2891' (GitHub-style hash reference)"
+        "text": "The output acknowledges that the scope was chosen per CONTRIBUTING.md — mentions the file or its mandate in the explanation"
       }
     ]
   },
@@ -149,19 +151,19 @@
     "name": "scope-required-by-contributing-md",
     "description": "CONTRIBUTING.md mandates scope for all commits — model omits scope for docs-only change",
     "prompt": "I updated the README to document the new configuration options added last sprint. Here is our CONTRIBUTING.md:\n\n---\n# Contributing\n\nAll commit messages MUST include a scope. Valid scopes are:\n- api\n- cli\n- docs\n- config\n- auth\n- db\n\nCommits without a scope will be rejected by CI.\n---\n\nWrite the conventional commit message for updating the README documentation.",
-    "trap": "Model thinks documentation changes don't need a scope and writes 'docs: update README configuration options' without a scope, violating the CONTRIBUTING.md mandate",
+    "trap": "Model thinks documentation changes don't need a scope and writes 'docs: update README' without a scope, violating the CONTRIBUTING.md mandate",
     "assertions": [
       {
         "id": "6.1",
-        "text": "A scope is present in the commit — the first line contains parentheses with a scope value, e.g. 'docs(docs):' or 'docs(config):'"
+        "text": "A scope is present in the commit — the first line contains parentheses with a scope value"
       },
       {
         "id": "6.2",
-        "text": "The scope value is one of the valid scopes listed in CONTRIBUTING.md: api, cli, docs, config, auth, or db"
+        "text": "The scope value is one of the valid scopes: api, cli, docs, config, auth, or db"
       },
       {
         "id": "6.3",
-        "text": "The scope is 'docs' or 'config' — the most appropriate scopes for a README/configuration documentation update"
+        "text": "The scope is 'docs' or 'config' — the most appropriate scopes for a README/configuration update"
       },
       {
         "id": "6.4",
@@ -169,16 +171,16 @@
       },
       {
         "id": "6.5",
-        "text": "The output acknowledges that scope is mandatory per CONTRIBUTING.md, either in the explanation or by explicitly stating the mandate was followed"
+        "text": "The output acknowledges that scope is mandatory per CONTRIBUTING.md — mentions the mandate or CI enforcement"
       }
     ]
   },
   {
     "id": 7,
-    "name": "dependency-update-cve-is-fix",
-    "description": "A dependency update to patch a CVE is fix(deps) or fix(security) — model writes chore(deps)",
-    "prompt": "I updated lodash from 4.17.15 to 4.17.21 in package.json and package-lock.json. The reason for this update is CVE-2021-23337 — a command injection vulnerability in lodash's template function. Write the conventional commit message.",
-    "trap": "Model sees a dependency version bump and writes 'chore(deps): bump lodash from 4.17.15 to 4.17.21' without recognizing the security context",
+    "name": "developer-framing-override-cve-is-fix",
+    "description": "Developer labels a security patch 'dependency maintenance' — skill must override to fix(deps) regardless of developer framing",
+    "prompt": "I ran `npm audit fix --force` which updated `node-semver` from 5.7.1 to 5.7.2 to address a high-severity CVSS 7.5 vulnerability. The developer calls it 'dependency maintenance'. Write the conventional commit message.",
+    "trap": "The developer's own framing ('dependency maintenance') steers the model toward chore(deps). Without the skill's explicit guidance that security vulnerability patches are fix not chore, the model defers to the developer's characterization.",
     "assertions": [
       {
         "id": "7.1",
@@ -190,24 +192,24 @@
       },
       {
         "id": "7.3",
-        "text": "The CVE identifier 'CVE-2021-23337' appears in the commit body or footer"
+        "text": "The body or description references the vulnerability severity — mentions 'high', 'CVSS', 'CVSS 7.5', or 'vulnerability'"
       },
       {
         "id": "7.4",
-        "text": "The commit does NOT start with 'chore' — chore is incorrect for a security fix"
+        "text": "The commit does NOT start with 'chore' — chore is incorrect for a security fix regardless of how the developer framed it"
       },
       {
         "id": "7.5",
-        "text": "The version numbers '4.17.15' and '4.17.21' appear in the body or description to document the upgrade range"
+        "text": "The version numbers '5.7.1' and '5.7.2' appear in the body or description to document the upgrade range"
       }
     ]
   },
   {
     "id": 8,
     "name": "revert-commit-format",
-    "description": "Reverting a commit requires revert: type with hash reference — model writes fix: or chore:",
+    "description": "Reverting a commit requires revert: type with hash reference and formal Reverts: footer — model writes fix: or chore:",
     "prompt": "I need to revert the commit that implemented OAuth2 PKCE flow because our OAuth2 provider changed their endpoints and the implementation is now broken. The commit being reverted has hash abc123def456789. The original commit subject was 'feat(auth): implement OAuth2 PKCE flow'. Write the conventional commit message for this revert.",
-    "trap": "Model writes 'fix(auth): revert OAuth2 PKCE flow' or 'chore: revert OAuth2 changes' instead of using the proper 'revert:' type with the formal hash reference",
+    "trap": "Model writes 'fix(auth): revert OAuth2 PKCE flow' instead of using the proper 'revert:' type with a formal Reverts: footer line",
     "assertions": [
       {
         "id": "8.1",
@@ -219,7 +221,7 @@
       },
       {
         "id": "8.3",
-        "text": "A 'Reverts' footer is present (e.g. 'Reverts abc123def456789' or 'Reverts feat(auth): implement OAuth2 PKCE flow')"
+        "text": "A formal 'Reverts' footer line is present (e.g. 'Reverts abc123def456789' or 'Reverts feat(auth): implement OAuth2 PKCE flow') — not just a body sentence"
       },
       {
         "id": "8.4",
@@ -248,11 +250,11 @@
       },
       {
         "id": "9.3",
-        "text": "The commit type is 'feat' — the first line starts with 'feat' (adding a new flag is a new feature)"
+        "text": "The commit type is 'feat' — the first line starts with 'feat'"
       },
       {
         "id": "9.4",
-        "text": "The scope is 'cli' — the first line contains '(cli)'"
+        "text": "The scope is 'cli', 'cmd', or 'cmd/root' — the first line contains '(cli)', '(cmd)', or '(cmd/root)'"
       },
       {
         "id": "9.5",
@@ -262,30 +264,30 @@
   },
   {
     "id": 10,
-    "name": "atomic-commit-split-suggestion",
-    "description": "A mixed changeset with multiple concerns should be split — model writes one bloated commit",
-    "prompt": "I have staged the following changes:\n1. Upgraded the project from Node.js 18 to Node.js 20 (updated .nvmrc, package.json engines field, and CI workflow file)\n2. Added a new /health endpoint to the Express API that returns system status\n3. Fixed a bug in the user serializer that was omitting the 'role' field\n\nAll three changes are staged together. Write the conventional commit message.",
-    "trap": "Model writes a single omnibus commit message like 'chore: upgrade Node.js 20, add health endpoint, fix user serializer' instead of recognizing this as three separate atomic commits",
+    "name": "atomic-commit-split-feat-plus-release",
+    "description": "A staged feat + version bump must be split — model bundles them into one feat: commit",
+    "prompt": "I have staged the following changes:\n1. New CSV export function added to `src/export.ts` — users can now download their data as a CSV file\n2. Version bumped from `1.2.3` to `1.3.0` in `package.json`\n\nBoth changes are staged together. Write the conventional commit message.",
+    "trap": "Model writes a single 'feat: add CSV export and bump version to 1.3.0' because the version bump looks like a natural part of shipping the feature. Without the skill's atomicity guidance, the model doesn't split the version bump into a separate chore(release) commit.",
     "assertions": [
       {
         "id": "10.1",
-        "text": "[LLM-judge] The output recommends splitting into separate commits rather than writing a single combined message"
+        "text": "[LLM-judge] The output recommends splitting into two separate commits rather than writing one combined message"
       },
       {
         "id": "10.2",
-        "text": "[LLM-judge] The output identifies at least 3 distinct concerns: the Node.js version upgrade, the health endpoint addition, and the serializer bug fix"
+        "text": "[LLM-judge] The output identifies both distinct concerns: the CSV export feature and the version bump as separate commit-worthy changes"
       },
       {
         "id": "10.3",
-        "text": "The output proposes a 'chore(deps):' or 'build:' message for the Node.js version bump as a separate commit"
+        "text": "The output proposes a 'feat:' or 'feat(export):' message for the CSV export functionality"
       },
       {
         "id": "10.4",
-        "text": "The output proposes a 'feat(api):' or 'feat:' message for the health endpoint as a separate commit"
+        "text": "The output proposes a 'chore(release):' or 'chore:' message for the version bump — NOT bundled with the feat"
       },
       {
         "id": "10.5",
-        "text": "The output proposes a 'fix:' message for the user serializer role field bug as a separate commit"
+        "text": "The version numbers '1.2.3' and '1.3.0' appear in the proposed version bump commit message"
       }
     ]
   }

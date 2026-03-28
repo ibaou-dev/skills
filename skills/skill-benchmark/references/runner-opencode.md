@@ -13,7 +13,8 @@ ln -s /home/ibaou/workspace/agentic-skills/skills/git-conventional-commits \
 ls -la ~/.agents/skills/
 ```
 
-OpenCode auto-discovers skills from `~/.agents/skills/` and `.agents/skills/` in the project directory.
+OpenCode auto-discovers skills from `~/.agents/skills/` and `.agents/skills/` in
+the project directory.
 
 ## Basic invocation
 
@@ -36,7 +37,8 @@ Check `opencode models` for the current list. Common free tiers:
 opencode models list
 ```
 
-Typical free model IDs vary by OpenCode version. Use `opencode models list` to discover available IDs before benchmarking.
+Typical free model IDs vary by OpenCode version. Use `opencode models list` to
+discover available IDs before benchmarking.
 
 ## Batch eval pattern
 
@@ -69,12 +71,15 @@ done
 
 ## Output format
 
-Same as `claude -p` — raw model response to stdout. Grade post-hoc against evals.json assertions.
+Same as `claude -p` — raw model response to stdout. Grade post-hoc against
+evals.json assertions.
 
 ## Notes
 
 - `--no-interactive` is required for scripting; omit for interactive sessions
-- OpenCode free models may have rate limits — add `sleep 1` between calls if needed
+- OpenCode free models may have rate limits — add `sleep 1` between calls if
+  needed
 - Model availability and IDs change; always run `opencode models list` first
 - Token counts in OpenCode output may differ from Claude API token counts
-- For fair comparison, run Claude and OpenCode benchmarks with the same eval prompts and workspace
+- For fair comparison, run Claude and OpenCode benchmarks with the same eval
+  prompts and workspace
