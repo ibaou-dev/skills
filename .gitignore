@@ -2,6 +2,7 @@
 node_modules/
 .DS_Store
 __pycache__/
+.env
 
 # AI agent noise dirs (npx skills installs here; we only use .agents/)
 .adal/
