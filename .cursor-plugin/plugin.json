@@ -1,0 +1,23 @@
+{
+  "name": "agentic-skills",
+  "displayName": "Agentic Skills for Git Workflows",
+  "description": "AI agent skills for git workflows and developer productivity",
+  "version": "1.0.0",
+  "author": {
+    "name": "ibaou-dev"
+  },
+  "homepage": "https://github.com/ibaou-dev/skills",
+  "repository": "https://github.com/ibaou-dev/skills",
+  "license": "MIT",
+  "keywords": [
+    "plugin",
+    "git",
+    "conventional-commits",
+    "ai-agent",
+    "skills",
+    "agentic",
+    "developer",
+    "productivity"
+  ],
+  "skills": "./skills/"
+}
