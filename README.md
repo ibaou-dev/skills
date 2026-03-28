@@ -1,6 +1,7 @@
 # agentic-skills
 
-AI agent skills for git workflows and developer productivity. Compatible with Claude Code, OpenCode, and Gemini CLI.
+AI agent skills for git workflows and developer productivity. Compatible with
+Claude Code, OpenCode, and Gemini CLI.
 
 ## Skills
 
@@ -27,11 +28,12 @@ npx skills add ibaou-dev/skills --skill git-conventional-commits
 
 | Skill | Version | Assertions | With Skill | Without Skill | Delta | Uplift |
 | --- | --- | --- | --- | --- | --- | --- |
-| _(no evaluations run yet)_ | | | | | | |
+| `git-conventional-commits` | v1.0.0 | 50 | 96% | 80% | +16pp | 1.20× |
 
 ## Development
 
-See [CLAUDE.md](CLAUDE.md) for authoring guidelines, eval setup, and benchmarking workflow.
+See [CLAUDE.md](CLAUDE.md) for authoring guidelines, eval setup, and
+benchmarking workflow.
 
 ## License
 
