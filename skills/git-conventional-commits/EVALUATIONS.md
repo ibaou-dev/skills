@@ -298,6 +298,9 @@ Qwen3 shows significantly lower delta than Claude models. The skill still provid
 | claude-sonnet-4-6 | **50/50 (100%)** | **35/50 (70%)** | **+30pp** | **1.43×** |
 | claude-haiku-4-5 | **47/50 (94%)** | **34/50 (68%)** | **+26pp** | **1.38×** |
 | qwen3-coder-30b-a3b-instruct | **40/50 (80%)** | **32/50 (64%)** | **+16pp** | **1.25×** |
+| qwen/qwen3.5-9b | **41/50 (82%)** | **31/50 (62%)** | **+20pp** | **1.32×** |
+
+_⚠ qwen3.5-9b eval 10 WITHOUT timed out (0/5 invalid) — real delta likely ~+15pp._
 
 <details>
 <summary>Full breakdown — claude-sonnet-4-6 (50 assertions)</summary>
@@ -509,6 +512,77 @@ _Run: 2026-03-30 · executor: local (http://100.84.126.41:1453) · judge: sessio
 
 </details>
 
+<details>
+<summary>Full breakdown — qwen/qwen3.5-9b (50 assertions)</summary>
+
+_Run: 2026-03-30 · executor: local (http://100.84.126.41:1453) · judge: session · grading: regex + LLM-as-judge (9.1, 9.2, 10.1, 10.2)_
+_⚠ Eval 10 WITHOUT timed out — 0/5 is invalid, not a model failure._
+
+| # | Assertion | With | Without |
+| --- | --- | --- | --- |
+| | **type-discrimination-refactor-vs-feat** | **<span class="r">4/5</span>** | **<span class="g">5/5</span>** |
+| 1.1 | type is 'refactor' | <span class="g">✓</span> | <span class="g">✓</span> |
+| 1.2 | imperative mood | <span class="g">✓</span> | <span class="g">✓</span> |
+| 1.3 | no word 'add'/'adds' | <span class="g">✓</span> | <span class="g">✓</span> |
+| 1.4 | scope is (auth) | <span class="g">✓</span> | <span class="g">✓</span> |
+| 1.5 | first line ≤ 72 chars | <span class="r">✗ 78 chars</span> | <span class="g">✓</span> |
+| | **breaking-change-footer-required** | **<span class="g">5/5</span>** | **<span class="g">5/5</span>** |
+| 2.1 | BREAKING CHANGE: footer present | <span class="g">✓</span> | <span class="g">✓</span> |
+| 2.2 | migration path references /api/v2/auth | <span class="g">✓</span> | <span class="g">✓</span> |
+| 2.3 | type ≠ chore | <span class="g">✓</span> | <span class="g">✓</span> |
+| 2.4 | body present | <span class="g">✓</span> | <span class="g">✓</span> |
+| 2.5 | ! suffix or BREAKING CHANGE footer | <span class="g">✓</span> | <span class="g">✓</span> |
+| | **contributing-md-non-standard-closing-keyword** — skill_context injected to WITH only | **<span class="r">1/5</span>** | **<span class="r">1/5</span>** |
+| 3.1 | 'Addressed #512' on its own line | <span class="r">✗ no 'Addressed #512'</span> | <span class="r">✗ no 'Addressed #512'</span> |
+| 3.2 | type = fix | <span class="r">✗ used feat(payment)</span> | <span class="g">✓</span> |
+| 3.3 | scope = (payments) | <span class="r">✗ used (payment)</span> | <span class="r">✗ used (payment)</span> |
+| 3.4 | no 'Fixes #512' or 'Closes #512' | <span class="r">✗ used Fixes/Closes</span> | <span class="r">✗ used Fixes/Closes</span> |
+| 3.5 | reference in footer, not description | <span class="g">✓</span> | <span class="r">✗ ref in subject</span> |
+| | **contributing-md-scope-override** — skill_context injected to WITH only | **<span class="r">4/5</span>** | **<span class="r">3/5</span>** |
+| 4.1 | scope is (core) | <span class="r">✗ used (form)</span> | <span class="r">✗ no scope</span> |
+| 4.2 | type = feat | <span class="g">✓</span> | <span class="r">✗ wrote prose</span> |
+| 4.3 | scope ≠ user/registration/ui/forms/frontend | <span class="g">✓</span> | <span class="g">✓</span> |
+| 4.4 | description mentions validation or form | <span class="g">✓</span> | <span class="g">✓</span> |
+| 4.5 | acknowledges CONTRIBUTING.md mandate | <span class="g">✓</span> | <span class="g">✓</span> |
+| | **gitlab-mr-vs-issue-reference** | **<span class="g">5/5</span>** | **<span class="g">5/5</span>** |
+| 5.1 | '#312' for issue | <span class="g">✓</span> | <span class="g">✓</span> |
+| 5.2 | '!89' for MR (with !) | <span class="g">✓</span> | <span class="g">✓</span> |
+| 5.3 | type = fix | <span class="g">✓</span> | <span class="g">✓</span> |
+| 5.4 | issue and MR on separate footer lines | <span class="g">✓</span> | <span class="g">✓</span> |
+| 5.5 | no '#89' for MR | <span class="g">✓</span> | <span class="g">✓</span> |
+| | **scope-required-by-contributing-md** | **<span class="g">5/5</span>** | **<span class="r">4/5</span>** |
+| 6.1 | scope present | <span class="g">✓</span> | <span class="g">✓</span> |
+| 6.2 | scope is valid per CONTRIBUTING.md | <span class="g">✓</span> | <span class="g">✓</span> |
+| 6.3 | scope = docs or config | <span class="g">✓</span> | <span class="g">✓</span> |
+| 6.4 | type = docs | <span class="g">✓</span> | <span class="g">✓</span> |
+| 6.5 | acknowledges CI mandate | <span class="g">✓</span> | <span class="r">✗ no CI mandate mention</span> |
+| | **developer-framing-override-cve-is-fix** — npm audit finding, developer says chore | **<span class="r">3/5</span>** | **<span class="r">2/5</span>** |
+| 7.1 | type = fix (not chore) | <span class="r">✗ wrote chore(deps)</span> | <span class="r">✗ wrote chore(deps)</span> |
+| 7.2 | scope = deps or security | <span class="g">✓</span> | <span class="g">✓</span> |
+| 7.3 | references audit/security context | <span class="g">✓</span> | <span class="r">✗</span> |
+| 7.4 | type ≠ chore | <span class="r">✗ type is chore</span> | <span class="r">✗ type is chore</span> |
+| 7.5 | version numbers 5.7.1 and 5.7.2 | <span class="g">✓</span> | <span class="g">✓</span> |
+| | **revert-commit-format** | **<span class="r">4/5</span>** | **<span class="r">4/5</span>** |
+| 8.1 | type = revert | <span class="g">✓</span> | <span class="g">✓</span> |
+| 8.2 | hash present | <span class="g">✓</span> | <span class="g">✓</span> |
+| 8.3 | formal Reverts: footer line | <span class="r">✗ no 'Reverts …' footer</span> | <span class="r">✗ no 'Reverts …' footer</span> |
+| 8.4 | original subject referenced | <span class="g">✓</span> | <span class="g">✓</span> |
+| 8.5 | reason in body | <span class="g">✓</span> | <span class="g">✓</span> |
+| | **no-contributing-md-found** | **<span class="g">5/5</span>** | **<span class="r">2/5</span>** |
+| 9.1 | [LLM-judge] notes no CONTRIBUTING.md found | <span class="g">✓</span> | <span class="r">✗</span> |
+| 9.2 | [LLM-judge] states standard CC spec used | <span class="g">✓</span> | <span class="r">✗</span> |
+| 9.3 | type = feat | <span class="g">✓</span> | <span class="g">✓</span> |
+| 9.4 | scope = cli, cmd, or cmd/root | <span class="g">✓</span> | <span class="r">✗ no scope</span> |
+| 9.5 | imperative mood | <span class="g">✓</span> | <span class="g">✓</span> |
+| | **atomic-commit-split-feat-plus-release** — ⚠ WITHOUT timed out | **<span class="g">5/5</span>** | **<span class="r">0/5 ⚠</span>** |
+| 10.1 | [LLM-judge] recommends splitting | <span class="g">✓</span> | <span class="r">✗ ⚠ timeout</span> |
+| 10.2 | [LLM-judge] identifies both concerns | <span class="g">✓</span> | <span class="r">✗ ⚠ timeout</span> |
+| 10.3 | feat: for CSV export | <span class="g">✓</span> | <span class="r">✗ ⚠ timeout</span> |
+| 10.4 | chore(release): or chore: for version bump | <span class="g">✓</span> | <span class="r">✗ ⚠ timeout</span> |
+| 10.5 | version numbers 1.2.3 and 1.3.0 in bump commit | <span class="g">✓</span> | <span class="r">✗ ⚠ timeout</span> |
+
+</details>
+
 ### Analysis
 
 **v1.1.0 improvements over v1.0.0:**
@@ -518,6 +592,7 @@ _Run: 2026-03-30 · executor: local (http://100.84.126.41:1453) · judge: sessio
 | claude-sonnet-4-6 | +30pp | +30pp | steady | 100% WITH (was 98%); eval 7/8 gains offset by lower WITHOUT on 3/4 |
 | claude-haiku-4-5 | +30pp | +26pp | −4pp | eval 7 gains (+3); 8.3 still fails WITH; 7.5 new regression |
 | qwen3-coder-30b | +12pp | +16pp | +4pp | eval 2/10 gains; eval 7 still partial (chore WITH) |
+| qwen3.5-9b | — | +20pp⚠ | — | eval 10 WITHOUT timeout inflates delta; similar pattern to 30b |
 
 **What improved:**
 - **Eval 1.5** — Shorter function names fixed the line-length trap. Sonnet now 100% WITH (was 98%). All models now achievable.
@@ -529,5 +604,13 @@ _Run: 2026-03-30 · executor: local (http://100.84.126.41:1453) · judge: sessio
 - **Eval 7 (Qwen3)** — WITH still uses `chore(deps)` (3/5). The skill's type table guidance is insufficient for this model to override the developer's explicit `chore` suggestion.
 - **Evals 3/4 (Qwen3)** — Persistent zero-delta. `skill_context` injection doesn't steer Qwen3 on scope/keyword overrides.
 - **Eval 7.5 (Haiku)** — New regression: Haiku omits version numbers in both WITH and WITHOUT.
+
+**qwen3.5-9b observations:**
+- Performs comparably to qwen3-coder-30b despite being 3× smaller (9B vs 30B params).
+- Eval 3: worst WITH score across all models (1/5) — misidentified type as `feat`, used `(payment)` not `(payments)`, used standard keyword despite CONTRIBUTING.md injection. Skill injection barely penetrates this model.
+- Eval 4: used `(form)` scope WITH (+1 over 30b which used `(frontend)`), closer but still wrong.
+- Eval 7: same pattern as 30b — both WITH and WITHOUT use `chore(deps)`, skill doesn't override developer framing.
+- Eval 9: strong signal (+3) — skill clearly teaches CONTRIBUTING.md absence acknowledgment.
+- Eval 10: 5/5 WITH (best among Qwen models), but WITHOUT timed out — delta artificially inflated.
 
 <!-- prettier-ignore-end -->
