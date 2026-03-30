@@ -15,7 +15,7 @@ compatibility:
   Designed for Claude Code or similar AI coding agents. Requires git.
 metadata:
   author: ibaou-dev
-  version: "1.0.0"
+  version: "1.1.0"
   openclaw:
     emoji: "📝"
     homepage: https://github.com/ibaou-dev/skills
@@ -115,6 +115,13 @@ Separate body from subject with one blank line.
 feat(api)!: remove v1 authentication endpoint
 
 BREAKING CHANGE: /api/v1/auth is removed. Migrate to /api/v2/auth.
+```
+
+**Revert footers:** For `revert:` commits, add a `Reverts:` footer alongside the
+hash in the body:
+
+```
+Reverts: feat(auth): implement OAuth2 PKCE flow (abc123def456789)
 ```
 
 **Issue references:** Format depends on tracker detected in Step 2.

@@ -3,7 +3,7 @@
     "id": 1,
     "name": "type-discrimination-refactor-vs-feat",
     "description": "Renaming + extracting a function is refactor, not feat — model defaults to feat",
-    "prompt": "I staged changes in my git repo. Here's what happened: I renamed the function `authenticateUser` to `verifyCredentials` in auth/handler.go, extracted its token-validation logic into a new private function `validateToken`, and updated all call sites in three other files. No new capability was added — it's the same behavior, just restructured. Write a conventional commit message for these staged changes. The scope should be 'auth'.",
+    "prompt": "I staged changes in my git repo. Here's what happened: I renamed the function `getUser` to `checkAuth` in auth/handler.go, extracted its token-validation logic into a new private function `verifyToken`, and updated all call sites in three other files. No new capability was added — it's the same behavior, just restructured. Write a conventional commit message for these staged changes. The scope should be 'auth'.",
     "trap": "Model sees a new function name and new private function, defaults to feat(auth) because it sees 'new' functionality, missing that no user-facing capability was added",
     "assertions": [
       {
@@ -179,8 +179,8 @@
     "id": 7,
     "name": "developer-framing-override-cve-is-fix",
     "description": "Developer labels a security patch 'dependency maintenance' — skill must override to fix(deps) regardless of developer framing",
-    "prompt": "I ran `npm audit fix --force` which updated `node-semver` from 5.7.1 to 5.7.2 to address a high-severity CVSS 7.5 vulnerability. The developer calls it 'dependency maintenance'. Write the conventional commit message.",
-    "trap": "The developer's own framing ('dependency maintenance') steers the model toward chore(deps). Without the skill's explicit guidance that security vulnerability patches are fix not chore, the model defers to the developer's characterization.",
+    "prompt": "I ran `npm audit` which flagged `node-semver` as requiring an update from 5.7.1 to 5.7.2. The developer refers to this as 'routine dependency maintenance' and suggests using `chore(deps)`. Write the conventional commit message.",
+    "trap": "Developer's framing ('routine maintenance', suggests 'chore(deps)') steers the model toward chore. Without the skill's explicit guidance that npm audit findings are security patches requiring fix not chore, the model defers to the developer's characterization.",
     "assertions": [
       {
         "id": "7.1",
@@ -192,7 +192,7 @@
       },
       {
         "id": "7.3",
-        "text": "The body or description references the vulnerability severity — mentions 'high', 'CVSS', 'CVSS 7.5', or 'vulnerability'"
+        "text": "The body or explanation references the security/audit context — contains 'audit', 'security', 'advisory', or 'vulnerability'"
       },
       {
         "id": "7.4",
