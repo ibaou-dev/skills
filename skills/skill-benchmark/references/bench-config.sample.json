@@ -1,0 +1,62 @@
+{
+  "skill": "skills/<your-skill-name>",
+  "skill_version": "v1.0.0",
+  "mode": "both",
+  "evals": [],
+  "delay": 3,
+  "runs": [
+    {
+      "label": "opencode-free",
+      "executor": {
+        "type": "opencode",
+        "model": "opencode/minimax-m2.5-free"
+      },
+      "judge": { "type": "none" }
+    },
+    {
+      "label": "local-model",
+      "executor": {
+        "type": "local",
+        "model": "<your-model-name>",
+        "base_url": "http://<host>:<port>",
+        "temperature": 0.2
+      },
+      "judge": { "type": "session" }
+    },
+    {
+      "label": "haiku-session",
+      "executor": {
+        "type": "session",
+        "model": "claude-haiku-4-5-20251001"
+      },
+      "judge": { "type": "none" }
+    },
+    {
+      "label": "openrouter-model",
+      "executor": {
+        "type": "openai_compat",
+        "model": "<provider>/<model-id>",
+        "base_url": "https://openrouter.ai/api/v1",
+        "api_key_env": "OPENROUTER_API_KEY",
+        "temperature": 0.2
+      },
+      "judge": {
+        "type": "openai_compat",
+        "model": "<provider>/<judge-model-id>",
+        "base_url": "https://openrouter.ai/api/v1",
+        "api_key_env": "OPENROUTER_API_KEY"
+      }
+    },
+    {
+      "label": "openai-compat-generic",
+      "executor": {
+        "type": "openai_compat",
+        "model": "<model-id>",
+        "base_url": "https://<provider-base-url>/v1",
+        "api_key_env": "MY_API_KEY",
+        "temperature": 0.2
+      },
+      "judge": { "type": "session" }
+    }
+  ]
+}

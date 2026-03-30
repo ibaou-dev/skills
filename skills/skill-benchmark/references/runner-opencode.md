@@ -1,5 +1,10 @@
 # OpenCode Runner Reference
 
+> **Note:** For benchmarking, prefer `scripts/benchmark.py --executor opencode`.
+> It handles symlink management, workspace isolation, ANSI stripping, and results
+> persistence automatically. This file documents the underlying CLI for reference.
+
+
 ## Discovery symlink setup
 
 Make skills discoverable to OpenCode by symlinking into `~/.agents/skills/`:
@@ -20,14 +25,18 @@ the project directory.
 
 ```bash
 # Non-interactive run with a specific model
-opencode run --model <model-id> --no-interactive "Your prompt here"
+opencode run --model <model-id> "Your prompt here"
 
-# With a skill loaded (after symlinking to ~/.agents/skills/)
-opencode run --model <model-id> --skill git-conventional-commits --no-interactive "prompt"
+# With a skill loaded: symlink skill first, then run — opencode auto-triggers it
+ln -sf /path/to/skills/<name> ~/.agents/skills/<name>
+opencode run --model <model-id> "Your prompt here"
 
-# Pipe prompt from file (for long prompts)
-opencode run --model <model-id> --no-interactive < prompt.txt
+# Without skill: remove symlink or run in an isolated workspace
+opencode run --dir /tmp/empty-workspace --model <model-id> "Your prompt here"
 ```
+
+Note: `--no-interactive` and `--skill` flags do not exist in opencode 1.3.4+.
+Skill loading is automatic when the skill is symlinked into `~/.agents/skills/`.
 
 ## Available free models (as of 2026-03)
 
@@ -40,31 +49,31 @@ opencode models list
 Typical free model IDs vary by OpenCode version. Use `opencode models list` to
 discover available IDs before benchmarking.
 
-## Batch eval pattern
+## Manual batch eval pattern (if not using benchmark.py)
 
 ```bash
 #!/bin/bash
 MODEL="<model-id>"
-SKILL_PATH="/home/ibaou/workspace/agentic-skills/skills/git-conventional-commits"
-WORKSPACE="/tmp/git-conventional-commits-workspace/benchmark"
-SKILL_NAME="git-conventional-commits"
+SKILL_NAME="<skill-name>"
+SKILL_PATH="/path/to/skills/$SKILL_NAME"
+WORKSPACE="/tmp/$SKILL_NAME-workspace/benchmark"
+EVALS_JSON="skills/$SKILL_NAME/evals/evals.json"
 
-# Ensure symlink exists
+# With skill: ensure symlink, run in isolated workspace
 ln -sf "$SKILL_PATH" ~/.agents/skills/"$SKILL_NAME"
-
-mkdir -p "$WORKSPACE/$MODEL/with_skill" "$WORKSPACE/$MODEL/without_skill"
-
-# With skill
+mkdir -p "$WORKSPACE/$MODEL/with_skill"
 for i in $(seq 1 10); do
-  PROMPT=$(jq -r ".[] | select(.id == $i) | .prompt" skills/git-conventional-commits/evals/evals.json)
-  opencode run --model "$MODEL" --skill "$SKILL_NAME" --no-interactive "$PROMPT" \
+  PROMPT=$(jq -r ".[] | select(.id == $i) | .prompt" "$EVALS_JSON")
+  opencode run --dir "$WORKSPACE" --model "$MODEL" "$PROMPT" \
     > "$WORKSPACE/$MODEL/with_skill/eval-$i-output.txt"
 done
 
-# Without skill
+# Without skill: remove symlink
+rm -f ~/.agents/skills/"$SKILL_NAME"
+mkdir -p "$WORKSPACE/$MODEL/without_skill"
 for i in $(seq 1 10); do
-  PROMPT=$(jq -r ".[] | select(.id == $i) | .prompt" skills/git-conventional-commits/evals/evals.json)
-  opencode run --model "$MODEL" --no-interactive "$PROMPT" \
+  PROMPT=$(jq -r ".[] | select(.id == $i) | .prompt" "$EVALS_JSON")
+  opencode run --dir "$WORKSPACE" --model "$MODEL" "$PROMPT" \
     > "$WORKSPACE/$MODEL/without_skill/eval-$i-output.txt"
 done
 ```

@@ -1,6 +1,40 @@
 # Benchmark Metrics Format
 
-## benchmark.json schema
+## results.ndjson — primary results store (benchmark.py)
+
+Written by `scripts/benchmark.py`. Lives at `.bench/<skill-name>/results.ndjson`
+(gitignored). One JSON record per line, append-only. View with `--report`.
+
+```json
+{"timestamp":"2026-03-30T10:00:00+00:00","skill":"git-conventional-commits","skill_version":"v1.0.0","label":"minimax-zen","executor":{"type":"opencode","model":"opencode/minimax-m2.5-free","base_url":"","api_key_env":"","api_key":"","temperature":0.2},"judge":{"type":"none","model":"","base_url":"","api_key_env":"","api_key":""},"mode":"both","n":50,"pct_with":96.0,"pct_without":54.0,"delta_pp":42.0,"runs":[...]}
+```
+
+Top-level fields:
+
+| Field | Type | Description |
+|---|---|---|
+| `timestamp` | ISO-8601 | UTC run time |
+| `skill` | string | skill directory name |
+| `skill_version` | string | from config |
+| `label` | string | human label from bench.json |
+| `executor` | object | full ExecutorConfig |
+| `judge` | object | full JudgeConfig |
+| `mode` | string | `with`, `without`, or `both` |
+| `n` | int | total assertions graded |
+| `pct_with` | float | pass % with skill |
+| `pct_without` | float | pass % without skill |
+| `delta_pp` | float | pct_with − pct_without |
+| `runs` | array | per-eval detail (see below) |
+
+Per-eval run fields (inside `runs[]`):
+
+```json
+{"eval_id":1,"name":"type-discrimination-refactor-vs-feat","mode":"with","response":"...","results":[{"id":"1.1","text":"...","passed":true,"note":""}],"passed":5,"total":5,"elapsed_s":17.3}
+```
+
+---
+
+## benchmark.json schema (skill-creator legacy format)
 
 Written per-skill after a full benchmark run. Lives at
 `<workspace>/benchmark.json`.

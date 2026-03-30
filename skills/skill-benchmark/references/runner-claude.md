@@ -1,5 +1,10 @@
 # Claude Runner Reference
 
+> **Note:** For benchmarking, prefer `scripts/benchmark.py --executor session`.
+> It handles prompt building, skill injection, and results persistence automatically.
+> This file documents the raw `claude -p` CLI for reference.
+
+
 ## Basic invocation
 
 ```bash
