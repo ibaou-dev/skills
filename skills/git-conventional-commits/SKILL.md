@@ -104,6 +104,7 @@ Include a body when:
 - The change is complex or spans multiple subsystems
 - A breaking change needs a migration path explained
 - A revert references the original commit and reason
+- A dependency update — include old → new version range
 
 Separate body from subject with one blank line.
 
