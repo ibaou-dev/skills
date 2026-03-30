@@ -603,7 +603,8 @@ _⚠ Eval 10 WITHOUT timed out — 0/5 is invalid, not a model failure._
 - **Eval 8.3 (Haiku/Qwen3)** — `Reverts:` footer guidance works for Sonnet but not Haiku or Qwen3. These models still put the hash in the body, not as a formal footer. May need stronger framing or example.
 - **Eval 7 (Qwen3)** — WITH still uses `chore(deps)` (3/5). The skill's type table guidance is insufficient for this model to override the developer's explicit `chore` suggestion.
 - **Evals 3/4 (Qwen3)** — Persistent zero-delta. `skill_context` injection doesn't steer Qwen3 on scope/keyword overrides.
-- **Eval 7.5 (Haiku)** — New regression: Haiku omits version numbers in both WITH and WITHOUT.
+- **Eval 7.5 (Haiku)** — Consistent regression across 2 runs: Haiku omits version numbers WITH skill. Confirmed as model limitation, not fixable via skill changes.
+- **Eval 8.3 (Haiku, confirmed)** — Footer reorganization (consolidating all footer types into unified list with example) did not fix Haiku. Re-run confirms model limitation. Follow-up run: 47/50 WITH, 31/50 WITHOUT, +32pp (1.52×) — delta increase due to WITHOUT variance, WITH unchanged.
 
 **qwen3.5-9b observations:**
 - Performs comparably to qwen3-coder-30b despite being 3× smaller (9B vs 30B params).
