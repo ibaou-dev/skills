@@ -1,0 +1,25 @@
+#!/bin/sh
+# Pre-commit hook: lint staged markdown and JSON files
+# Setup: git config core.hooksPath .githooks
+
+# Markdown: prettier format check
+STAGED_MD=$(git diff --cached --name-only --diff-filter=ACM -- '*.md')
+if [ -n "$STAGED_MD" ]; then
+  if ! npx prettier --check $STAGED_MD 2>/dev/null; then
+    echo ""
+    echo "Markdown formatting issues found. Fix with:"
+    echo "  npx prettier --write $STAGED_MD"
+    exit 1
+  fi
+fi
+
+# JSON: syntax validation
+STAGED_JSON=$(git diff --cached --name-only --diff-filter=ACM -- '*.json')
+if [ -n "$STAGED_JSON" ]; then
+  for f in $STAGED_JSON; do
+    if ! python3 -m json.tool "$f" > /dev/null 2>&1; then
+      echo "Invalid JSON: $f"
+      exit 1
+    fi
+  done
+fi

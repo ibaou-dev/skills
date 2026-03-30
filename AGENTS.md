@@ -242,11 +242,12 @@ python eval-viewer/generate_review.py ... --static /tmp/review.html
 
 Eval results live at **two levels**:
 
-- **`skills/{name}/EVALUATIONS.md`** — full per-skill breakdown: assertion table,
-  model/date metadata, analysis notes. Create this file on first eval run; append
-  versioned sections on subsequent runs.
-- **Repo-root `EVALUATIONS.md`** — summary table only, one row per skill/version,
-  linking to the per-skill file. Never write full breakdowns here.
+- **`skills/{name}/EVALUATIONS.md`** — full per-skill breakdown: assertion
+  table, model/date metadata, analysis notes. Create this file on first eval
+  run; append versioned sections on subsequent runs.
+- **Repo-root `EVALUATIONS.md`** — summary table only, one row per
+  skill/version, linking to the per-skill file. Never write full breakdowns
+  here.
 
 After running evals:
 
@@ -299,19 +300,19 @@ _Model: claude-sonnet-4-6 · N runs · YYYY-MM-DD · grading: regex + LLM-as-jud
 The root file contains only the Summary table (wrapped in prettier-ignore). All
 detail belongs in the per-skill file.
 
-**`skill_context` eval field:** Evals that require CONTRIBUTING.md detection use a
-`skill_context` field in evals.json (sibling to `prompt`). The with-skill runner
-injects this content as simulated file-detection output; the without-skill runner
-omits it entirely. This isolates the skill's detection capability from the base
-model's knowledge.
+**`skill_context` eval field:** Evals that require CONTRIBUTING.md detection use
+a `skill_context` field in evals.json (sibling to `prompt`). The with-skill
+runner injects this content as simulated file-detection output; the
+without-skill runner omits it entirely. This isolates the skill's detection
+capability from the base model's knowledge.
 
 ## Benchmarking with skill-creator
 
 Use `/skill-creator` to drive the full eval loop. The skill-creator is installed
 as a project-level skill at `.agents/skills/skill-creator/`.
 
-For multi-model benchmarking, use `scripts/benchmark.py` directly or invoke
-the `skill-benchmark` skill (`/skill-benchmark`):
+For multi-model benchmarking, use `scripts/benchmark.py` directly or invoke the
+`skill-benchmark` skill (`/skill-benchmark`):
 
 ```bash
 # Scaffold a config for a skill (once per skill)
@@ -331,18 +332,21 @@ python3 scripts/benchmark.py \
 python3 scripts/benchmark.py --skill skills/<skill-name> --report
 ```
 
-**Executor types:** `opencode` (OpenCode Zen free models) · `openai_compat` (OpenRouter,
-any OpenAI-compat API) · `local` (custom `/api/v1/chat` schema) · `session` (`claude -p`)
+**Executor types:** `opencode` (OpenCode Zen free models) · `openai_compat`
+(OpenRouter, any OpenAI-compat API) · `local` (custom `/api/v1/chat` schema) ·
+`session` (`claude -p`)
 
-**Judge types:** `none` (regex) · `session` (current Claude session) · `openai_compat`
+**Judge types:** `none` (regex) · `session` (current Claude session) ·
+`openai_compat`
 
-Results persist to `.bench/<skill>/results.ndjson` (gitignored).
-Bench configs live in `.bench/<skill>/bench.json` (gitignored, scaffold with `--init-config`).
+Results persist to `.bench/<skill>/results.ndjson` (gitignored). Bench configs
+live in `.bench/<skill>/bench.json` (gitignored, scaffold with `--init-config`).
 Sample config: `skills/skill-benchmark/references/bench-config.sample.json`
 
 **Python dependency:**
 
-`scripts/benchmark.py` requires `requests`. Preferred runner is `uv` (auto-installs deps):
+`scripts/benchmark.py` requires `requests`. Preferred runner is `uv`
+(auto-installs deps):
 
 ```bash
 # Install uv once (fast Rust-based Python tool manager)
@@ -400,6 +404,19 @@ npx skills add ibaou-dev/skills --skill git-conventional-commits
 # Cross-ref format
 `ibaou-dev/skills@git-conventional-commits`
 ```
+
+## Git Hooks
+
+Pre-commit hooks live in `.githooks/` (tracked). Enable after clone:
+
+```bash
+git config core.hooksPath .githooks
+```
+
+Checks run on commit:
+
+- **Markdown**: `npx prettier --check` on staged `*.md` files
+- **JSON**: `python3 -m json.tool` syntax validation on staged `*.json` files
 
 ## Plugin Configuration
 

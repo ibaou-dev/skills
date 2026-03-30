@@ -380,6 +380,65 @@ def _judge_openai_compat(cfg: JudgeConfig, assertion_text: str, response: str) -
 
 
 # ---------------------------------------------------------------------------
+# Judge: batched (groups assertions from same eval into one call)
+# ---------------------------------------------------------------------------
+
+def _build_batch_prompt(assertions: list[dict], response: str) -> str:
+    lines = ["You are grading an AI-generated git commit message against multiple assertions.", ""]
+    lines.append("ASSERTIONS:")
+    for a in assertions:
+        lines.append(f"[{a['id']}] {a['text']}")
+    lines.append("")
+    lines.append(f"MODEL OUTPUT:\n{response}")
+    lines.append("")
+    lines.append("For each assertion, reply on its own line with the format:")
+    lines.append("[ID] PASS or FAIL — brief reason")
+    return "\n".join(lines)
+
+
+def _parse_batch_response(out: str, assertions: list[dict]) -> dict[str, tuple[bool, str]]:
+    results: dict[str, tuple[bool, str]] = {}
+    for a in assertions:
+        aid = a["id"]
+        pattern = re.compile(rf"\[{re.escape(aid)}\]\s*(PASS|FAIL)\b(.*)", re.IGNORECASE)
+        m = pattern.search(out)
+        if m:
+            passed = m.group(1).upper() == "PASS"
+            note = m.group(2).strip().lstrip("—-– ").strip()
+            results[aid] = (passed, "" if passed else note)
+        else:
+            results[aid] = (False, "batch judge: no verdict found")
+    return results
+
+
+def _judge_session_batch(assertions: list[dict], response: str) -> dict[str, tuple[bool, str]]:
+    prompt = _build_batch_prompt(assertions, response)
+    try:
+        result = subprocess.run(
+            ["claude", "-p", prompt],
+            capture_output=True, text=True, timeout=60,
+        )
+        return _parse_batch_response(result.stdout.strip(), assertions)
+    except Exception as e:
+        return {a["id"]: (False, f"session judge error: {e}") for a in assertions}
+
+
+def _judge_openai_compat_batch(cfg: JudgeConfig, assertions: list[dict], response: str) -> dict[str, tuple[bool, str]]:
+    prompt = _build_batch_prompt(assertions, response)
+    try:
+        base = cfg.base_url.rstrip("/")
+        url = f"{base}/v1/chat/completions"
+        headers = {"Authorization": f"Bearer {cfg.resolved_key()}", "Content-Type": "application/json"}
+        payload = {"model": cfg.model, "messages": [{"role": "user", "content": prompt}], "temperature": 0}
+        resp = requests.post(url, headers=headers, json=payload, timeout=60)
+        resp.raise_for_status()
+        out = resp.json()["choices"][0]["message"]["content"].strip()
+        return _parse_batch_response(out, assertions)
+    except Exception as e:
+        return {a["id"]: (False, f"judge error: {e}") for a in assertions}
+
+
+# ---------------------------------------------------------------------------
 # Assertion grader
 # ---------------------------------------------------------------------------
 
@@ -635,9 +694,22 @@ def run_one_eval(
         print(f"\n--- response ---\n{response}\n--- end ---\n")
 
     results = []
+    # Batch LLM-judged assertions into one judge call per eval
+    llm_assertions = [a for a in eval_case["assertions"] if a["id"] in LLM_JUDGED]
+    batch_verdicts: dict[str, tuple[bool, str]] = {}
+    if llm_assertions and judge.type in ("session", "openai_compat"):
+        if judge.type == "session":
+            batch_verdicts = _judge_session_batch(llm_assertions, response)
+        else:
+            batch_verdicts = _judge_openai_compat_batch(judge, llm_assertions, response)
+
     for assertion in eval_case["assertions"]:
-        passed, note = grade_assertion(assertion, response, judge)
-        results.append({"id": assertion["id"], "text": assertion["text"], "passed": passed, "note": note})
+        aid = assertion["id"]
+        if aid in batch_verdicts:
+            passed, note = batch_verdicts[aid]
+        else:
+            passed, note = grade_assertion(assertion, response, judge)
+        results.append({"id": aid, "text": assertion["text"], "passed": passed, "note": note})
 
     return {
         "eval_id": eval_case["id"], "name": eval_case["name"], "mode": mode,

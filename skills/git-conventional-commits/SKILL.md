@@ -109,7 +109,12 @@ Separate body from subject with one blank line.
 
 ## Step 7: Write Footers
 
-**Breaking changes:** Use BOTH the `!` suffix AND a `BREAKING CHANGE:` footer:
+**Footers** (one per line, after blank line separating from body):
+
+- `BREAKING CHANGE: <description>` — required for breaking changes (also add `!`
+  suffix to type)
+- `Reverts: <hash> <original subject>` — required for `revert:` commits
+- `Fixes #N` / `Closes #N` — issue references per tracker (see table below)
 
 ```
 feat(api)!: remove v1 authentication endpoint
@@ -117,14 +122,13 @@ feat(api)!: remove v1 authentication endpoint
 BREAKING CHANGE: /api/v1/auth is removed. Migrate to /api/v2/auth.
 ```
 
-**Revert footers:** For `revert:` commits, add a `Reverts:` footer alongside the
-hash in the body:
-
 ```
-Reverts: feat(auth): implement OAuth2 PKCE flow (abc123def456789)
+revert: undo OAuth2 PKCE flow
+
+Reverts: abc123def456789 feat(auth): implement OAuth2 PKCE flow
 ```
 
-**Issue references:** Format depends on tracker detected in Step 2.
+**Issue tracker formats** (detected in Step 2):
 
 | Tracker         | Footer format                                  | Example            |
 | --------------- | ---------------------------------------------- | ------------------ |

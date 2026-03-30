@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "file=$(echo \"$TOOL_INPUT\" | grep -oP '\"file_path\":\\s*\"\\K[^\"]+'); if echo \"$file\" | grep -qE '\\.md$'; then npx prettier --write \"$file\" 2>/dev/null; fi"
+          }
+        ]
+      }
+    ]
+  }
+}
