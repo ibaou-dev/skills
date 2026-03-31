@@ -177,19 +177,21 @@ def load_evals(skill_dir: Path) -> list[dict]:
     return json.loads(evals_file.read_text())
 
 
-def build_injected_prompt(prompt: str, skill_body: str, mode: str, skill_context: str = "") -> str:
-    """For non-opencode executors: inject skill body into the prompt text."""
+def build_injected_prompt(prompt: str, skill_body: str, mode: str,
+                          skill_context: str = "", context_label: str = "") -> str:
+    """For session executor: inject skill body into the prompt text."""
     if mode == "without":
         return prompt
+    label = context_label or "Supplementary context"
     if skill_context:
         return (
             f"{skill_body}\n\n"
-            f"--- CONTRIBUTING.md content (found at repo root) ---\n"
+            f"--- {label} ---\n"
             f"{skill_context}\n"
-            f"--- END CONTRIBUTING.md ---\n\n"
+            f"--- END ---\n\n"
             f"{prompt}"
         )
-    return f"{skill_body}\n\n---\n\nNow write the conventional commit message for the following scenario:\n\n{prompt}"
+    return f"{skill_body}\n\n---\n\n{prompt}"
 
 
 # ---------------------------------------------------------------------------
@@ -341,7 +343,7 @@ def execute_session(cfg: ExecutorConfig, full_prompt: str) -> str:
 
 def _judge_session(assertion_text: str, response: str) -> tuple[bool, str]:
     prompt = (
-        f"You are grading an AI-generated git commit message against an assertion.\n\n"
+        f"You are grading an AI model's output against an assertion.\n\n"
         f"ASSERTION:\n{assertion_text}\n\n"
         f"MODEL OUTPUT:\n{response}\n\n"
         f"Does the output satisfy the assertion? "
@@ -365,7 +367,7 @@ def _judge_session(assertion_text: str, response: str) -> tuple[bool, str]:
 
 def _judge_openai_compat(cfg: JudgeConfig, assertion_text: str, response: str) -> tuple[bool, str]:
     prompt = (
-        f"You are grading an AI-generated git commit message against an assertion.\n\n"
+        f"You are grading an AI model's output against an assertion.\n\n"
         f"ASSERTION:\n{assertion_text}\n\n"
         f"MODEL OUTPUT:\n{response}\n\n"
         f"Does the output satisfy the assertion? "
@@ -390,7 +392,7 @@ def _judge_openai_compat(cfg: JudgeConfig, assertion_text: str, response: str) -
 # ---------------------------------------------------------------------------
 
 def _build_batch_prompt(assertions: list[dict], response: str) -> str:
-    lines = ["You are grading an AI-generated git commit message against multiple assertions.", ""]
+    lines = ["You are grading an AI model's output against multiple assertions.", ""]
     lines.append("ASSERTIONS:")
     for a in assertions:
         lines.append(f"[{a['id']}] {a['text']}")
@@ -448,8 +450,9 @@ def _judge_openai_compat_batch(cfg: JudgeConfig, assertions: list[dict], respons
 # Assertion grader
 # ---------------------------------------------------------------------------
 
-LLM_JUDGED = {"9.1", "9.2", "10.1", "10.2"}
-
+# ---------------------------------------------------------------------------
+# Target extraction helpers
+# ---------------------------------------------------------------------------
 
 def _extract_commit(text: str) -> str:
     m = re.search(r"```[a-z]*\n(.*?)```", text, re.DOTALL)
@@ -473,150 +476,77 @@ def _scope(fl: str) -> str:
     return m.group(1) if m else ""
 
 
-def _desc(fl: str) -> str:
-    m = re.match(r"^[a-z]+(?:\([^)]+\))?!?:\s*(.+)", fl)
-    return m.group(1).strip() if m else fl
-
-
-def _in_footer(text: str, pattern: str) -> bool:
-    lines = _extract_commit(text).splitlines()
-    after_blank = False
+def _footer_text(text: str) -> str:
+    commit = _extract_commit(text)
+    lines = commit.splitlines()
     for i, line in enumerate(lines):
-        if i > 0 and not lines[i - 1].strip():
-            after_blank = True
-        if after_blank and pattern in line:
-            return True
-    return False
+        if i > 0 and not line.strip():
+            return "\n".join(lines[i + 1:])
+    return ""
 
 
-def _regex_grade(aid: str, r: str, c: str, fl: str) -> tuple[bool, str]:
-    """Regex-only grading. Returns (passed, note)."""
-    if aid == "1.1":
-        ok = fl.lower().startswith("refactor"); return ok, "" if ok else f"starts: {fl[:30]}"
-    if aid == "1.2":
-        fw = _desc(fl).split()[0].lower() if _desc(fl).split() else ""
-        ok = fw in {"extract","rename","restructure","move","refactor","update","replace","change","split","break","reorganize"}
-        return ok, "" if ok else f"first word: '{fw}'"
-    if aid == "1.3":
-        ok = " add " not in fl.lower() and not fl.lower().startswith("add ") and " adds " not in fl.lower()
-        return ok, "" if ok else "contains 'add'"
-    if aid == "1.4":
-        ok = "(auth)" in fl; return ok, "" if ok else f"no (auth)"
-    if aid == "1.5":
-        ok = len(fl) <= 72; return ok, "" if ok else f"{len(fl)} chars"
-    if aid == "2.1":
-        ok = "BREAKING CHANGE:" in c; return ok, "" if ok else "no BREAKING CHANGE: footer"
-    if aid == "2.2":
-        ok = "/api/v2/auth" in r or ("v2" in r.lower() and "auth" in r.lower()); return ok, "" if ok else "no v2 mention"
-    if aid == "2.3":
-        ok = not fl.lower().startswith("chore"); return ok, "" if ok else "type is chore"
-    if aid == "2.4":
-        ok = len([l for l in c.splitlines() if l.strip()]) > 1; return ok, "" if ok else "no body"
-    if aid == "2.5":
-        ok = "!" in fl or "BREAKING CHANGE:" in c; return ok, "" if ok else "no ! or BREAKING CHANGE"
-    if aid == "3.1":
-        ok = any(re.match(r"Addressed #512", l.strip()) for l in c.splitlines()); return ok, "" if ok else "no 'Addressed #512'"
-    if aid == "3.2":
-        ok = fl.lower().startswith("fix"); return ok, "" if ok else f"type: {fl[:20]}"
-    if aid == "3.3":
-        ok = "(payments)" in fl; return ok, "" if ok else f"scope: {_scope(fl) or 'none'}"
-    if aid == "3.4":
-        ok = "Fixes #512" not in c and "Closes #512" not in c and "Resolves #512" not in c; return ok, "" if ok else "used Fixes/Closes/Resolves"
-    if aid == "3.5":
-        ok = _in_footer(r, "#512") and "#512" not in fl; return ok, "" if ok else "ref in subject or not in footer"
-    if aid == "4.1":
-        ok = "(core)" in fl; return ok, "" if ok else f"scope: {_scope(fl) or 'none'}"
-    if aid == "4.2":
-        ok = fl.lower().startswith("feat"); return ok, "" if ok else f"type: {fl[:20]}"
-    if aid == "4.3":
-        ok = not any(s in fl for s in {"(user)","(registration)","(ui)","(forms)","(frontend)"}); return ok, "" if ok else f"bad scope: {_scope(fl)}"
-    if aid == "4.4":
-        ok = any(w in r.lower() for w in ["validation","validate","form","registration"]); return ok, "" if ok else "no validation mention"
-    if aid == "4.5":
-        ok = "contributing" in r.lower(); return ok, "" if ok else "no CONTRIBUTING.md mention"
-    if aid == "5.1":
-        ok = "#312" in c; return ok, "" if ok else "no #312"
-    if aid == "5.2":
-        ok = "!89" in c; return ok, "" if ok else "no !89"
-    if aid == "5.3":
-        ok = fl.lower().startswith("fix"); return ok, "" if ok else f"type: {fl[:20]}"
-    if aid == "5.4":
-        ls = c.splitlines(); i312 = next((i for i,l in enumerate(ls) if "#312" in l),-1); i89 = next((i for i,l in enumerate(ls) if "!89" in l),-1)
-        ok = i312 >= 0 and i89 >= 0 and i312 != i89; return ok, "" if ok else "refs on same line or missing"
-    if aid == "5.5":
-        ok = "#89" not in c; return ok, "" if ok else "contains #89 (should be !89)"
-    if aid == "6.1":
-        ok = bool(re.match(r"^[a-z]+\([^)]+\)", fl)); return ok, "" if ok else f"no scope"
-    if aid == "6.2":
-        ok = _scope(fl) in {"api","cli","docs","config","auth","db"}; return ok, "" if ok else f"bad scope: {_scope(fl)}"
-    if aid == "6.3":
-        ok = _scope(fl) in {"docs","config"}; return ok, "" if ok else f"scope: {_scope(fl)}"
-    if aid == "6.4":
-        ok = fl.lower().startswith("docs"); return ok, "" if ok else f"type: {fl[:20]}"
-    if aid == "6.5":
-        ok = any(w in r.lower() for w in ["mandatory","required","must","ci","rejected","enforce"]); return ok, "" if ok else "no CI mandate mention"
-    if aid == "7.1":
-        ok = fl.lower().startswith("fix"); return ok, "" if ok else f"type: {fl[:20]}"
-    if aid == "7.2":
-        ok = _scope(fl) in {"deps","security","deps/security"}; return ok, "" if ok else f"scope: {_scope(fl)}"
-    if aid == "7.3":
-        ok = any(w in r.lower() for w in ["high","cvss","vulnerability","vulnerab","security"]); return ok, "" if ok else "no severity mention"
-    if aid == "7.4":
-        ok = not fl.lower().startswith("chore"); return ok, "" if ok else "type is chore"
-    if aid == "7.5":
-        ok = "5.7.1" in c and "5.7.2" in c; return ok, "" if ok else "missing versions"
-    if aid == "8.1":
-        ok = fl.lower().startswith("revert"); return ok, "" if ok else f"type: {fl[:20]}"
-    if aid == "8.2":
-        ok = "abc123def456789" in c or "abc123" in c; return ok, "" if ok else "no commit hash"
-    if aid == "8.3":
-        ok = any(re.match(r"Reverts\s+", l.strip()) for l in c.splitlines()); return ok, "" if ok else "no 'Reverts ...' footer"
-    if aid == "8.4":
-        ok = "oauth2" in r.lower() or "pkce" in r.lower(); return ok, "" if ok else "no OAuth2/PKCE mention"
-    if aid == "8.5":
-        ok = any(w in r.lower() for w in ["provider","endpoint","changed","broken","incompatible","no longer"]); return ok, "" if ok else "no reason in body"
-    # LLM-judged fallbacks (regex heuristics when judge=none)
-    if aid == "9.1":
-        ok = any(p in r.lower() for p in ["no contributing","not found","contributing.md not","couldn't find","could not find","absent"])
-        return ok, "" if ok else "no absence acknowledgment"
-    if aid == "9.2":
-        ok = any(p in r.lower() for p in ["conventional commits specification","conventionalcommits","conventional commits spec","cc spec"])
-        return ok, "" if ok else "no spec reference"
-    if aid == "9.3":
-        ok = fl.lower().startswith("feat"); return ok, "" if ok else f"type: {fl[:20]}"
-    if aid == "9.4":
-        ok = any(s in fl for s in ["(cli)","(cmd)","(cmd/root)"]); return ok, "" if ok else f"scope: {_scope(fl) or 'none'}"
-    if aid == "9.5":
-        fw = _desc(fl).split()[0].lower() if _desc(fl).split() else ""
-        ok = fw in {"add","implement","introduce","create","enable","support","expose"}; return ok, "" if ok else f"not imperative: '{fw}'"
-    if aid == "10.1":
-        ok = any(p in r.lower() for p in ["split","separate","two commit","2 commit","separate commit","individual commit"])
-        return ok, "" if ok else "no split recommendation"
-    if aid == "10.2":
-        ok = ("csv" in r.lower() or "export" in r.lower()) and ("version" in r.lower() or "bump" in r.lower() or "1.3.0" in r)
-        return ok, "" if ok else "missing one or both concerns"
-    if aid == "10.3":
-        ok = bool(re.search(r"feat(\(export\))?:", r)); return ok, "" if ok else "no feat(export):"
-    if aid == "10.4":
-        ok = bool(re.search(r"chore(\(release\))?:", r)); return ok, "" if ok else "no chore(release):"
-    if aid == "10.5":
-        ok = "1.2.3" in r and "1.3.0" in r; return ok, "" if ok else "missing versions"
-    return False, f"unhandled {aid}"
+def _get_target(response: str, target: str) -> str:
+    if target == "response":
+        return response
+    if target == "commit":
+        return _extract_commit(response)
+    fl = _first_line(response)
+    if target == "first_line":
+        return fl
+    if target == "scope":
+        return _scope(fl)
+    if target == "footer":
+        return _footer_text(response)
+    return response
+
+
+# ---------------------------------------------------------------------------
+# Generic regex grader (reads patterns from evals.json grading objects)
+# ---------------------------------------------------------------------------
+
+def _eval_condition(cond: dict, response: str) -> tuple[bool, str]:
+    target_name = cond.get("target", "response")
+    pattern = cond.get("pattern", "")
+    negate = cond.get("negate", False)
+    target = _get_target(response, target_name)
+    flags = re.MULTILINE if cond.get("multiline") else 0
+    match = bool(re.search(pattern, target, flags))
+    if negate:
+        return (not match, "" if not match else f"pattern found in {target_name}")
+    return (match, "" if match else f"{target_name}: {target[:50]}")
+
+
+def _grade_regex(assertion: dict, response: str) -> tuple[bool, str]:
+    grading = assertion.get("grading", {})
+    if "all" in grading:
+        for cond in grading["all"]:
+            passed, note = _eval_condition(cond, response)
+            if not passed:
+                return False, note
+        return True, ""
+    if "any" in grading:
+        notes = []
+        for cond in grading["any"]:
+            passed, note = _eval_condition(cond, response)
+            if passed:
+                return True, ""
+            notes.append(note)
+        return False, "; ".join(notes)
+    return _eval_condition(grading, response)
 
 
 def grade_assertion(assertion: dict, response: str, judge: JudgeConfig) -> tuple[bool, str]:
-    aid = assertion["id"]
-    r, c, fl = response, _extract_commit(response), _first_line(response)
-
-    # LLM-judged assertions — use judge if configured, otherwise regex fallback
-    if aid in LLM_JUDGED:
-        if judge.type == "session":
-            return _judge_session(assertion["text"], r)
-        if judge.type == "openai_compat":
-            return _judge_openai_compat(judge, assertion["text"], r)
-        # fall through to regex fallback
-
-    return _regex_grade(aid, r, c, fl)
+    grading = assertion.get("grading", {})
+    method = grading.get("method", "")
+    if not method:
+        method = "llm" if assertion["text"].startswith("[LLM-judge]") else "regex"
+    if method == "llm":
+        # LLM path is handled by batch grading in caller; this is regex fallback
+        fallback = grading.get("regex_fallback")
+        if fallback:
+            return _eval_condition(fallback, response)
+        return False, "no judge configured and no regex_fallback"
+    return _grade_regex(assertion, response)
 
 
 # ---------------------------------------------------------------------------
@@ -682,16 +612,18 @@ def run_one_eval(
             if mode == "with":
                 sys_prompt = skill_body
                 if skill_context:
+                    label = eval_case.get("context_label", "Supplementary context")
                     user_prompt = (
-                        f"--- CONTRIBUTING.md content (found at repo root) ---\n"
+                        f"--- {label} ---\n"
                         f"{skill_context}\n"
-                        f"--- END CONTRIBUTING.md ---\n\n{prompt}"
+                        f"--- END ---\n\n{prompt}"
                     )
             response = execute_openai_compat(executor, user_prompt, sys_prompt)
         elif executor.type == "local":
             response = execute_local(executor, prompt, skill_body, mode)
         elif executor.type == "session":
-            full_prompt = build_injected_prompt(prompt, skill_body, mode, skill_context)
+            ctx_label = eval_case.get("context_label", "")
+            full_prompt = build_injected_prompt(prompt, skill_body, mode, skill_context, ctx_label)
             response = execute_session(executor, full_prompt)
         else:
             raise ValueError(f"Unknown executor type: {executor.type!r}")
@@ -710,7 +642,9 @@ def run_one_eval(
 
     results = []
     # Batch LLM-judged assertions into one judge call per eval
-    llm_assertions = [a for a in eval_case["assertions"] if a["id"] in LLM_JUDGED]
+    llm_assertions = [a for a in eval_case["assertions"]
+                      if a.get("grading", {}).get("method") == "llm"
+                      or (not a.get("grading") and a["text"].startswith("[LLM-judge]"))]
     batch_verdicts: dict[str, tuple[bool, str]] = {}
     if llm_assertions and judge.type in ("session", "openai_compat"):
         if judge.type == "session":
