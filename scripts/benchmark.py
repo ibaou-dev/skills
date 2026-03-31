@@ -258,17 +258,23 @@ def execute_opencode(cfg: ExecutorConfig, prompt: str, workspace: Path) -> str:
 # Executor: openai_compat (HTTP)
 # ---------------------------------------------------------------------------
 
-def execute_openai_compat(cfg: ExecutorConfig, full_prompt: str, retries: int = 3) -> str:
+def execute_openai_compat(cfg: ExecutorConfig, user_prompt: str,
+                          system_prompt: str = "", retries: int = 3) -> str:
     base = cfg.base_url.rstrip("/")
     url = f"{base}/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {cfg.resolved_key()}",
         "Content-Type": "application/json",
     }
+    messages: list[dict] = []
+    if system_prompt:
+        messages.append({"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": user_prompt})
     payload = {
         "model": cfg.model,
-        "messages": [{"role": "user", "content": full_prompt}],
+        "messages": messages,
         "temperature": cfg.temperature,
+        "max_tokens": 4096,
     }
     for attempt in range(retries + 1):
         try:
@@ -671,8 +677,17 @@ def run_one_eval(
         if executor.type == "opencode":
             response = execute_opencode(executor, prompt, workspace)
         elif executor.type == "openai_compat":
-            full_prompt = build_injected_prompt(prompt, skill_body, mode, skill_context)
-            response = execute_openai_compat(executor, full_prompt)
+            sys_prompt = ""
+            user_prompt = prompt
+            if mode == "with":
+                sys_prompt = skill_body
+                if skill_context:
+                    user_prompt = (
+                        f"--- CONTRIBUTING.md content (found at repo root) ---\n"
+                        f"{skill_context}\n"
+                        f"--- END CONTRIBUTING.md ---\n\n{prompt}"
+                    )
+            response = execute_openai_compat(executor, user_prompt, sys_prompt)
         elif executor.type == "local":
             response = execute_local(executor, prompt, skill_body, mode)
         elif executor.type == "session":
