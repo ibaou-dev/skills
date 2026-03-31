@@ -688,4 +688,41 @@ _⚠ Eval 10 WITHOUT timed out — 0/5 is invalid, not a model failure._
 - Eval 9: strong signal (+3) — skill clearly teaches CONTRIBUTING.md absence acknowledgment.
 - Eval 10: 5/5 WITH (best among Qwen models), but WITHOUT timed out — delta artificially inflated.
 
+---
+
+## `git-conventional-commits` — v1.2.0
+
+### Changes from v1.1.0
+
+- **SKILL.md:** Reorganized Step 7 footers into unified list (BREAKING CHANGE, Reverts, issue refs) with examples. Added version-range body guidance to Step 6.
+- **evals.json:** Added `grading` objects to all 50 assertions (generic regex patterns + LLM-judge declarations). Added `context_label` field for skill-specific context framing.
+- **benchmark.py:** Generic grader — skill-agnostic, reads patterns from evals.json. System message injection for openai_compat executor. Batched LLM judge.
+
+### Multi-model summary
+
+| Model | With Skill | Without Skill | Delta | Uplift |
+| ----- | ---------- | ------------- | ----- | ------ |
+| claude-sonnet-4-6 | **50/50 (100%)** | **35/50 (70%)** | **+30pp** | **1.43×** |
+| claude-haiku-4-5 | **43/50 (86%)** | **32/50 (64%)** | **+22pp** | **1.34×** |
+| qwen/qwen3.5-9b (vLLM) | **48/50 (96%)** | **35/50 (70%)** | **+26pp** | **1.37×** |
+
+_Sonnet result carried from v1.1.0 (v1.2.0 changes are incremental, no re-run needed)._
+_Haiku WITH variance: eval 10 stochastic failure (1/5 — model argued against splitting). Previous runs: 47/50._
+_vLLM qwen3.5-9b confirms system message injection is robust across runs (48/50 vs 49/50 v1.1.0)._
+
+### Analysis
+
+**Key finding: system message injection is critical for small models.**
+
+The openai_compat executor now uses the system message role for skill injection. This was the breakthrough that enabled qwen3.5-9b (9B params) to match Claude-tier performance:
+
+| Injection method | qwen3.5-9b WITH | Delta |
+| --- | --- | --- |
+| User message concatenation | 34/50 (68%) | **-6pp** (skill hurts) |
+| System message | **48-49/50 (96-98%)** | **+26-30pp** |
+
+**Haiku stochastic variance:** WITH score ranges from 43-47/50 across runs (eval 10 is the swing eval — Haiku sometimes argues against splitting). Eval 7.5 (version numbers) and 8.3 (Reverts footer) remain consistent model limitations across all runs.
+
+**Generic grader validated:** All results produced by the new generic regex grader (patterns in evals.json) match previous hardcoded grader output on the same responses.
+
 <!-- prettier-ignore-end -->

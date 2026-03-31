@@ -15,7 +15,7 @@ compatibility:
   Designed for Claude Code or similar AI coding agents. Requires git.
 metadata:
   author: ibaou-dev
-  version: "1.1.0"
+  version: "1.2.0"
   openclaw:
     emoji: "📝"
     homepage: https://github.com/ibaou-dev/skills
